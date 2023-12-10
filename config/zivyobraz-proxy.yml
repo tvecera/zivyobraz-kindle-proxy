@@ -1,0 +1,21 @@
+zivyobraz:
+  api_base_url: 'https://cdn.zivyobraz.eu/index.php'
+
+devices:
+  - name: "kindle"
+    endpoint: "/images/kindle.png"
+    mac: "00:00:00:00:00:00"
+    width: 600
+    height: 800
+    # BW - 2 colors (Black and White)
+    # 3C - 3 colors (Black, White and Red/Yellow)
+    # 4G - 4 colors (Grayscale - Black, Darkgrey, Lightgrey, White) (https://github.com/ZinggJM/GxEPD2_4G)
+    # 7C - 7 colors
+    color_type: "4G"
+    # 'JPEG', 'BMP', 'WEBP', 'PNG'
+    output_format: "PNG"
+    # PIL img.convert(color_mode) - "L", "RGB" and "CMYK"
+    color_mode: "L"
+
+
+
