@@ -7,6 +7,9 @@ import os
 import yaml
 import logging
 import argparse
+from flask import request
+from datetime import datetime
+import pytz
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                     filename='./logs/zivyobraz-proxy.log', filemode='a')
@@ -21,7 +24,7 @@ def validate_config(config):
     logging.info("Config validation....")
 
     required_keys = ['zivyobraz', 'devices']
-    zivyobraz_keys = ['api_base_url']
+    zivyobraz_keys = ['api_base_url', 'api_import_url', 'preferred_timezone']
     devices_keys = ['name', 'endpoint', 'mac', 'width', 'height', 'color_type', 'output_format', 'color_mode']
 
     # Validate required top-level keys
@@ -87,7 +90,14 @@ args = parser.parse_args()
 # Load configuration
 loaded_config = load_config(args.config)
 
-ZIVYOBLAZ_API_BASE_URL = loaded_config['zivyobraz']['api_base_url']
+ZIVYOBRAZ_API_BASE_URL = loaded_config['zivyobraz']['api_base_url']
+
+
+def get_current_time():
+    """Fetches the current time formatted for API requests."""
+
+    tz = pytz.timezone(loaded_config['zivyobraz']['preferred_timezone'])
+    return datetime.now(tz).strftime('%d-%m-%Y %H:%M:%S')
 
 
 def convert_image(bmp_data, device_config):
@@ -129,18 +139,47 @@ def serve_device_image(device_config):
     :return: PNG image or error message with status code.
     """
 
-    logging.info("Serve device image from the ZivyObraz API.")
+    logging.info(f"Serve device image from the ZivyObraz API - Device: {device_config['name']}")
+
+    voltage = request.args.get('voltage')
+    voltage_value = int(voltage) / 1000 if voltage is not None else 0.000
+
+    if "import_device_info" in device_config and device_config["import_device_info"]:
+        battery = request.args.get('battery')
+        temperature = request.args.get('temperature')
+
+        battery_value = int(battery) if battery is not None else 0
+        temperature_value = int(temperature) if temperature is not None else 0
+        last_activity = get_current_time()
+
+        logging.info(
+            f"Device: {device_config['name']} - Battery: {battery}, Voltage: {voltage}, Temperature: {temperature}")
+
+        params = {
+            'import_key': os.getenv('ZIVYOBRAZ_API_IMPORT_KEY'),
+            f'device.{device_config["name"]}.battery': battery_value,
+            f'device.{device_config["name"]}.voltage': voltage_value,
+            f'device.{device_config["name"]}.temperature_value': temperature_value,
+            f'device.{device_config["name"]}.last_activity': last_activity
+        }
+
+        url = f"{loaded_config['zivyobraz']['api_import_url']}?{urlencode(params)}"
+        send_response = requests.get(url)
+        logging.info(f"Sending import for device {device_config['name']}: Battery: {battery_value}, "
+                     f"Voltage: {voltage_value}, Temperature: {temperature_value}, Last Activity: {last_activity}")
+        logging.info(f"Sending import for device {device_config['name']}: Status code {send_response.status_code}")
 
     params = {
         'mac': device_config['mac'],
         'timestamp_check': 1,
         'x': device_config['width'],
         'y': device_config['height'],
+        'v': voltage_value,
         'c': device_config['color_type'],
         'fw': 1
     }
 
-    url = f"{ZIVYOBLAZ_API_BASE_URL}?{urlencode(params)}"
+    url = f"{ZIVYOBRAZ_API_BASE_URL}?{urlencode(params)}"
     response = requests.get(url)
 
     if response.status_code == 200:

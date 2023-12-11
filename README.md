@@ -33,7 +33,7 @@ To run the script using Docker on a Raspberry Pi:
 3. In the `zivyobraz-departures` directory, run the Docker container using the command:
 
    ```
-   docker run -d --name kindle-proxy --restart=always -p 8080:8080 -e PORT=8080 -v ./config:/usr/src/app/config -v ./logs:/usr/src/app/logs ghcr.io/tvecera/zivyobraz-kindle-proxy:$VERSION
+   docker run -d --name kindle-proxy --restart=always -p 8080:8080 -e PORT=8080 -e ZIVYOBRAZ_API_IMPORT_KEY=$ZIVYOBLAZ_API_IMPORT_KEY -v ./config:/usr/src/app/config -v ./logs:/usr/src/app/logs ghcr.io/tvecera/zivyobraz-kindle-proxy:$VERSION
    ```
 
 ## Building and Running Your Own Local Docker Image
@@ -69,11 +69,11 @@ To run the application in a Docker container:
 2. Run the Docker container:
     - On default port 8080:
       ```
-      docker run -d --name kindle-proxy --restart=always -p 8080:8080 -v ./config:/usr/src/app/config -v ./logs:/usr/src/app/logs zivyobraz-kindle-proxy:latest
+      docker run -d --name kindle-proxy --restart=always -p 8080:8080 -e ZIVYOBRAZ_API_IMPORT_KEY=$ZIVYOBLAZ_API_IMPORT_KEY -v ./config:/usr/src/app/config -v ./logs:/usr/src/app/logs zivyobraz-kindle-proxy:latest
       ```
     - On a custom port (e.g., 8081):
       ```
-      docker run -d --name kindle-proxy --restart=always -p 8081:8081 -e PORT=8081 -v ./config:/usr/src/app/config -v ./logs:/usr/src/app/logs zivyobraz-kindle-proxy:latest
+      docker run -d --name kindle-proxy --restart=always -p 8081:8081 -e PORT=8081 -e ZIVYOBRAZ_API_IMPORT_KEY=$ZIVYOBLAZ_API_IMPORT_KEY -v ./config:/usr/src/app/config -v ./logs:/usr/src/app/logs zivyobraz-kindle-proxy:latest
       ```
 
 ## Usage
